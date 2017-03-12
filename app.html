@@ -40,7 +40,7 @@
             <section class="container">
                 <!-- START row -->
                 <div class="row">
-                    <div class="col-lg-6 col-lg-offset-3">
+                    <div class="main-row">
                         <!-- Brand -->
                         <div class="text-center" style="margin-bottom:40px;">
                             <h5 class="semibold text-muted mt-5">
@@ -49,6 +49,9 @@
                         </div>
                         <!--/ Brand -->
 
+                        <div id="photos">
+
+                        </div>
                     </div>
                 </div>
                 <!--/ END row -->
@@ -63,6 +66,70 @@
         <script type="text/javascript" src="/javascript/core.js"></script>
         <script type="text/javascript" src="/javascript/backend/app.js"></script>
         <!--/ Application and vendor script : mandatory -->
+
+        <style>
+            .main-row {
+                display: block;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            .instagram-photo {
+                position: relative;
+                margin-bottom: 20px;
+            }
+            .instagram-photo img {
+                width: 100%;
+            }
+            .instagram-photo .caption {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+100&0+0,0.65+100 */
+                background: -moz-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 100%); /* FF3.6-15 */
+                background: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%,rgba(0,0,0,0.65) 100%); /* Chrome10-25,Safari5.1-6 */
+                background: linear-gradient(to bottom, rgba(0,0,0,0) 0%,rgba(0,0,0,0.65) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#a6000000',GradientType=0 ); /* IE6-9 */
+            }
+
+            .instagram-photo .caption .text {
+                position: absolute;
+                bottom: 15px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: white;
+                padding: 0 30px;
+            }
+        </style>
+
+        <script>
+            (function(){
+
+                $.ajax({
+                    url: "/api/photos",
+                    success: function(photos) {
+                        console.log(photos);
+
+                        photos.forEach(function(photo){
+                            var html = [
+                                '<div class="instagram-photo">',
+                                    '<img src="'+photo.images.standard_resolution.url+'" />',
+                                    '<div class="caption"><div class="text">'+photo.caption.text+'</div></div>',
+                                '</div>'
+                            ]
+
+                            $("#photos").append(html.join(''));
+                        });
+                    },
+                    error: function() {
+                        alert("failed to fetch your photos");
+                    }
+                })
+
+            })();
+        </script>
 
         <!-- Plugins and page level script : optional -->
         <!--/ Plugins and page level script : optional -->

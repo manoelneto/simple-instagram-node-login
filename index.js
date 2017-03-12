@@ -4,15 +4,15 @@ var express = require("express"),
     session = require("express-session"),
     instagram = require("instagram-node"),
     path = require("path"),
-    http = require("http"),
 
     app = express(),
 
     PORT = process.env.PORT || "8080",
     SESSION_SECRET = process.env.SESSION_SECRET,
+    URL = process.env.URL,
     INSTAGRAM_APP_ID = process.env.INSTAGRAM_APP_ID,
     INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET,
-    INSTAGRAM_REDIRECT_URI = "http://localhost:" + PORT + "/insta_callback",
+    INSTAGRAM_REDIRECT_URI = "http://"+URL+"/insta_callback",
     INSTAGRAM_API = "https://api.instagram.com/v1";
 
 function getInstagramClient() {
@@ -54,7 +54,7 @@ app.get("/api/photos", function(req, res){
   var ig = getInstagramClient();
 
   if (!req.session.instagram) {
-    req.send({
+    res.send({
       error: true,
       message: "No instagram info"
     });
@@ -62,6 +62,16 @@ app.get("/api/photos", function(req, res){
     return;
   }
 
+  var ig = getInstagramClient();
+
+  ig.use({
+    access_token: req.session.instagram.access_token
+  });
+
+  ig.user_self_media_recent(function(err, medias, pagination){
+    if (err) res.send(err);
+    res.send(medias);
+  });
 
 });
 
@@ -70,9 +80,7 @@ app.get("/insta_auth", function(req, res){
 
   res.redirect(
     ig.get_authorization_url(
-      INSTAGRAM_REDIRECT_URI, {
-        scope: ['likes']
-      }
+      INSTAGRAM_REDIRECT_URI
     )
   );
 });
