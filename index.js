@@ -17,7 +17,8 @@ var express = require("express"),
     INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET,
     INSTAGRAM_REDIRECT_URI = "http://"+URL+"/insta_callback",
     INSTAGRAM_API = "https://api.instagram.com/v1",
-    REDIS_URL = process.env.REDIS_URL;
+    REDIS_URL = process.env.REDIS_URL,
+    REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 
 function getInstagramClient() {
   var ig = instagram.instagram();
@@ -33,13 +34,19 @@ function getInstagramClient() {
 app.set('view engine', 'jade');
 app.set('views', __dirname + "/views");
 
+var redis_opt = {
+  url: REDIS_URL,
+};
+
+if (REDIS_PASSWORD) {
+  redis_opt.password = REDIS_PASSWORD;
+}
+
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  store: new redisStore({
-    url: REDIS_URL
-  })
+  store: new redisStore(redis_opt)
 }));
 
 app.use(bodyParser.json());
