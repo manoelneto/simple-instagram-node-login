@@ -1,0 +1,25 @@
+extends ./layout
+
+block main
+  // START Template Container
+  section.container
+    // START row
+    .row
+      .col-lg-6.col-lg-offset-3
+        // Brand
+        //
+          <div class="text-center" style="margin-bottom:40px;">
+          <h5 class="semibold text-muted mt-5">
+          Your info on instagram.
+          </h5>
+          </div>
+        // / Brand
+        // Social button
+        ul.list-table
+          li
+            a.btn.btn-block.btn-primary(href='/insta_auth')
+              | Connect with instagram
+        // Social button
+    // / END row
+  // / END Template Container
+

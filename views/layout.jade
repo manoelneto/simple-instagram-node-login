@@ -1,0 +1,68 @@
+doctype html
+html.backend
+  // START Head
+  head
+    // START META SECTION
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    title Points Rocket - Instagram
+    meta(name='author', content='pointsrocket.com')
+    meta(name='description', content='')
+    meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
+    // / END META SECTION
+    // START STYLESHEETS
+    // Plugins stylesheet : optional
+    // / Plugins stylesheet : optional
+    // Application stylesheet : mandatory
+    link(rel='stylesheet', href='/stylesheet/bootstrap.css')
+    link(rel='stylesheet', href='/stylesheet/layout.css')
+    link(rel='stylesheet', href='/stylesheet/uielement.css')
+    // / Application stylesheet
+    // Theme stylesheet : optional
+    link(rel='stylesheet', href='/stylesheet/custom.css')
+    // / Theme stylesheet : optional
+    // modernizr script
+    script(type='text/javascript', src='/plugins/modernizr/js/modernizr.js')
+    // / modernizr script
+    // END STYLESHEETS
+  // / END Head
+  // START Body
+  body
+    // START Template Main
+    section#main(role='main')
+      block main
+        // START Template Container
+        section.container
+          // START row
+          .row
+            .col-lg-6.col-lg-offset-3
+              // Brand
+              //
+                <div class="text-center" style="margin-bottom:40px;">
+                <h5 class="semibold text-muted mt-5">
+                Your info on instagram.
+                </h5>
+                </div>
+              // / Brand
+              // Social button
+              ul.list-table
+                li
+                  a.btn.btn-block.btn-primary(href='/insta_auth')
+                    | Connect with instagram
+              // Social button
+          // / END row
+        // / END Template Container
+    // / END Template Main
+    // START JAVASCRIPT SECTION (Load javascripts at bottom to reduce load time)
+    // Application and vendor script : mandatory
+    script(type='text/javascript', src='/javascript/vendor.js')
+    script(type='text/javascript', src='/javascript/core.js')
+    script(type='text/javascript', src='/javascript/backend/app.js')
+    script(type='text/javascript', src='/javascript/custom.js')
+    // / Application and vendor script : mandatory
+    // Plugins and page level script : optional
+    // / Plugins and page level script : optional
+    // / END JAVASCRIPT SECTION
+
+    block extra
+  // / END Body

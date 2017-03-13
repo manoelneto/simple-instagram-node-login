@@ -3,6 +3,64 @@
  * Your very own modification ;)
  *
  * --------------------------- */
-.your_own_class {
-  color: red;
-}
+ .fixed-full {
+   position: fixed;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   padding: 10px 20px;
+ }
+
+ .table-wrapper {
+   display: table;
+   width: 100%;
+   height: 100%;
+ }
+
+ .table-wrapper .table-cell-wrapper {
+   display: table-cell;
+   vertical-align: middle;
+ }
+
+ .hashtag-page {
+   overflow-y: auto;
+ }
+
+ .hashtags-wrapper {
+   height: 100%;
+ }
+
+ .hashtags-wrapper .hashtag {
+   float: left;
+   width: 300px;
+   margin-right: 20px;
+ }
+
+ .hashtag .panel-title {
+   /*width: 1px;*/
+ }
+
+ .loading {
+
+ }
+
+ .loaded {
+
+ }
+
+ .loading .loading-show {
+   display: block;
+ }
+
+ .loading .loaded-show {
+   display: none;
+ }
+
+ .loaded .loading-show {
+   display: none;
+ }
+
+ .loaded .loaded-show {
+   display: block;
+ }

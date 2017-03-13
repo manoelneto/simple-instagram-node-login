@@ -4,6 +4,9 @@ var express = require("express"),
     session = require("express-session"),
     instagram = require("instagram-node"),
     path = require("path"),
+    redis = require("redis"),
+    redisStore = require('connect-redis')(session),
+    bodyParser = require('body-parser'),
 
     app = express(),
 
@@ -13,7 +16,8 @@ var express = require("express"),
     INSTAGRAM_APP_ID = process.env.INSTAGRAM_APP_ID,
     INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET,
     INSTAGRAM_REDIRECT_URI = "http://"+URL+"/insta_callback",
-    INSTAGRAM_API = "https://api.instagram.com/v1";
+    INSTAGRAM_API = "https://api.instagram.com/v1",
+    REDIS_URL = process.env.REDIS_URL;
 
 function getInstagramClient() {
   var ig = instagram.instagram();
@@ -26,19 +30,27 @@ function getInstagramClient() {
   return ig;
 }
 
+app.set('view engine', 'jade');
+app.set('views', __dirname + "/views");
+
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: false,
+  store: new redisStore({
+    url: REDIS_URL
+  })
 }));
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use('/javascript', express.static(__dirname + '/javascript'));
 app.use('/stylesheet', express.static(__dirname + '/stylesheet'));
 app.use('/plugins', express.static(__dirname + '/plugins'));
 app.use('/image', express.static(__dirname + '/image'));
 
 app.get("/", function(req, res){
-  res.sendFile(path.join(__dirname + "/index.html"));
+  res.render("home");
 });
 
 app.get("/app", function(req, res){
@@ -47,14 +59,42 @@ app.get("/app", function(req, res){
     return;
   }
 
-  res.sendFile(path.join(__dirname + "/app.html"));
+  res.render("app");
+});
+
+app.get("/hashtags/add", function(req, res){
+  if (!req.session.instagram) {
+    req.session.back_url = "/hashtags/add";
+    res.redirect("/insta_auth");
+    return;
+  }
+
+  res.render("hashtags_add");
+});
+
+
+app.get("/hashtags", function(req, res){
+  if (!req.session.instagram) {
+    req.session.back_url = "/hashtags";
+    res.redirect("/insta_auth");
+    return;
+  }
+
+  var hashtags = [];
+
+  if (!req.session.hashtags) {
+    res.redirect('/hashtags/add');
+    return;
+  }
+
+  hashtags = req.session.hashtags.split(",");
+
+  res.render("hashtags", {hashtags: hashtags});
 });
 
 app.get("/api/photos", function(req, res){
-  var ig = getInstagramClient();
-
   if (!req.session.instagram) {
-    res.send({
+    res.status(422).send({
       error: true,
       message: "No instagram info"
     });
@@ -75,12 +115,46 @@ app.get("/api/photos", function(req, res){
 
 });
 
+app.get("/api/comments", function(req, res){
+  if (!req.session.instagram) {
+    res.status(422).send({
+      error: true,
+      message: "No instagram info"
+    });
+
+    return;
+  }
+
+  if (!req.query.media_id) {
+    res.status(422).send({
+      error: true,
+      message: "No media_id passed"
+    });
+
+    return;
+  }
+
+  var ig = getInstagramClient();
+
+  ig.use({
+    access_token: req.session.instagram.access_token
+  });
+
+  ig.comments(req.query.media_id, function(err, result, remaining, limit){
+    if (err) res.send(err);
+    res.send(result);
+  });
+
+});
+
 app.get("/insta_auth", function(req, res){
   var ig = getInstagramClient();
 
   res.redirect(
     ig.get_authorization_url(
-      INSTAGRAM_REDIRECT_URI
+      INSTAGRAM_REDIRECT_URI, {
+        scope: ["follower_list", "public_content"]
+      }
     )
   );
 });
@@ -93,9 +167,77 @@ app.get("/insta_callback", function(req, res){
       res.send(err);
     } else {
       req.session.instagram = result;
-      res.redirect("/app");
+      if (req.session.back_url) {
+        res.redirect(req.session.back_url);
+      } else {
+        res.redirect("/app");
+      }
     }
   });
+});
+
+app.post('/api/hashtags', function(req, res){
+  if (!req.body.hashtag) {
+    res.status(422).send({message: "You must provide a hashtag"});
+    return;
+  }
+
+  var hashtags = (req.session.hashtags || "").split(',');
+
+  hashtags = hashtags.concat(req.body.hashtag.split(","));
+
+  hashtags = hashtags.filter(function(item, pos) {
+    // uniq and clean
+    return item && hashtags.indexOf(item) == pos;
+  });
+
+  req.session.hashtags = hashtags.join(",");
+
+  res.status(201).end();
+});
+
+app.delete('/api/hashtags/:hashtag', function(req, res){
+  if (!req.params.hashtag) {
+    res.status(422).send({message: "You must provide a hashtag"});
+    return;
+  }
+
+  var hashtags = (req.session.hashtags || "").split(',');
+
+  var hashtagsToDestroy = req.params.hashtag.split(',');
+
+  hashtags = hashtags.filter(function(hashtag){
+    // I want to keep hashtags thas istn`t in hashtag to destroy
+    return hashtagsToDestroy.indexOf(hashtag) === -1;
+  });
+
+  req.session.hashtags = hashtags.join(",");
+
+  res.status(200).end();
+});
+
+app.get('/api/hashtags/:hashtag', function(req, res){
+  var hashtag = req.params.hashtag;
+
+  if (!req.session.instagram) {
+    res.status(422).send({
+      error: true,
+      message: "No instagram info"
+    });
+
+    return;
+  }
+
+  var ig = getInstagramClient();
+
+  ig.use({
+    access_token: req.session.instagram.access_token
+  });
+
+  ig.tag_media_recent(hashtag, function(err, result, remaining, limit) {
+    res.send(result);
+  });
+
 });
 
 app.listen(PORT, function(){

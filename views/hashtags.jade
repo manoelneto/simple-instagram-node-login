@@ -1,0 +1,64 @@
+extends ./layout
+
+block main
+  script#post-template.mustache-template(type='x-tmpl-mustache').
+
+    <!-- thumbnail -->
+    <div class="thumbnail">
+        <!-- media -->
+        <div class="media">
+            <!-- indicator -->
+            <div class="indicator"><span class="spinner"></span></div>
+            <!--/ indicator -->
+            <!-- toolbar overlay -->
+            <div class="overlay">
+                <div class="toolbar">
+                    <a href="#" class="btn btn-default" title="love this picture"><i class="ico-heart6"></i></a>
+                </div>
+            </div>
+            <!--/ toolbar overlay -->
+            <!-- meta -->
+            <span class="meta bottom darken">
+                <h5 class="nm semibold">
+                    {{{caption_text}}} <br/>
+                    <small><i class="ico-calendar2"></i> {{{created_time_str}}}</small>
+                </h5>
+            </span>
+            <!--/ meta -->
+            <img src="{{{images.low_resolution.url}}}" alt="{{{caption_text}}}" width="100%" />
+        </div>
+        <!--/ media -->
+    </div>
+    <!--/ thumbnail -->
+
+
+  .hashtag-page.fixed-full
+    div
+      a.btn.btn-primary.mb20(href="/hashtags/add") Add hashtag
+    - var width = 100
+    .hashtags-wrapper(style="width: " + hashtags.length * 320 + "px")
+      - each hashtag in hashtags
+        .hashtag.loading-child.loading(data-hashtag=hashtag)
+          .panel.panel-default
+            .panel-heading
+              h2.panel-title= hashtag
+
+              .panel-toolbar.text-right
+                // option
+                .option.loaded-show
+                  button.btn.btn-reload
+                    i.reload
+
+                  button.btn.btn-remove
+                    i.remove
+
+
+            .panel-body
+              .loading-show
+                p Loading hashtag content
+
+              .instagram-posts-list.loaded-show
+                // thumbnails goes here
+
+
+

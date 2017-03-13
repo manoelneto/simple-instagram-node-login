@@ -1,0 +1,14 @@
+extends ./layout
+
+block main
+  .hashtag-choose-page.fixed-full
+    .table-wrapper
+      .table-cell-wrapper
+        form.hashtag-form
+          legend.text-center Type hashtag to monitor (comma separated)
+          input.form-control.input-lg.text-center(name="hashtags_to_monitor")
+          div.text-center
+            button.btn.btn-lg.btn-primary.mt20(type="submit")
+              | Add
+
+
