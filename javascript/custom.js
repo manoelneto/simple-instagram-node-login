@@ -51,7 +51,7 @@ if ($('.hashtag-page').length) {
       url: "/api/hashtags/" + hashtag,
       success: function(data) {
         if (data.length === 0) {
-          $el.find('.instagram-posts-list').html("We don`t has post for this hashtag :(");
+          $el.find('.instagram-posts-list').html("We don`t have post for this hashtag :(");
           return;
         }
 
