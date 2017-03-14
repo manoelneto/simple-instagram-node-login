@@ -273,7 +273,7 @@ app.get("/insta_auth", function(req, res){
   res.redirect(
     ig.get_authorization_url(
       INSTAGRAM_REDIRECT_URI, {
-        scope: ["follower_list", "public_content"]
+        scope: ["basic", "follower_list", "public_content"]
       }
     )
   );
