@@ -40,9 +40,12 @@ if ($('.hashtag-page').length) {
   var postTemplate = $('#post-template').html();
 
   function loadHashTagContent(hashtag, $el) {
-    var $loadingChild = $el;
+    var $loadingPostsChild = $el.find('.loading-posts'),
+        $loadingGraphChild = $el.find('.loading-graph');
 
-    $loadingChild.addClass('loading').removeClass("loaded");
+    $loadingPostsChild.addClass('loading').removeClass("loaded");
+    $loadingGraphChild.addClass('loading').removeClass("loaded");
+    $el.find(".instagram-graph").html("");
 
     $.ajax({
       url: "/api/hashtags/" + hashtag,
@@ -65,12 +68,57 @@ if ($('.hashtag-page').length) {
         $el.find('.instagram-posts-list').html(postsRendered.join("\n"));
       },
       error: function() {
-        alert("Could not load hashtag: " + hashtag);
+        $el.find('.instagram-posts-list').html("Could not load hashtag");
       },
       complete: function() {
-        $loadingChild.removeClass('loading').addClass("loaded");
+        $loadingPostsChild.removeClass('loading').addClass("loaded");
       }
-    })
+    });
+
+    $.ajax({
+      url: "/api/comments/" + hashtag,
+      success: function(data) {
+        if (data.constructor.name !== "Array") {
+          $el.find(".instagram-graph").css("height", "");
+          $el.find(".instagram-graph").html("Could not load this chart");
+          return;
+        }
+
+        $el.find(".instagram-graph").height(200);
+
+        setTimeout(function(){
+
+          $.plot($el.find(".instagram-graph")[0], [{
+            color: '#3b5998',
+            data: data.filter(function(d, i){
+              return i <= 5;
+            })
+          }], {
+            series: {
+              bars: {
+                show: true,
+                barWidth: 0.6,
+                align: "center"
+              }
+            },
+            xaxis: {
+              mode: "categories",
+              tickLength: 0
+            }
+          });
+
+        }, 100);
+
+      },
+      error: function() {
+        $el.find(".instagram-graph").css("height", "");
+        $el.find(".instagram-graph").html("Could not load this chart");
+        return;
+      },
+      complete: function() {
+        $loadingGraphChild.removeClass('loading').addClass("loaded");
+      }
+    });
   }
 
   $('.hashtag').each(function(){

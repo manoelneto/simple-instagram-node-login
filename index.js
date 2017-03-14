@@ -7,6 +7,8 @@ var express = require("express"),
     redis = require("redis"),
     redisStore = require('connect-redis')(session),
     bodyParser = require('body-parser'),
+    flatten = require('flatten'),
+    InstagramHashtagCommentsCrawler = require('./lib/instagram_hashtag_comments_crawler'),
 
     app = express(),
 
@@ -20,6 +22,11 @@ var express = require("express"),
     REDIS_URL = process.env.REDIS_URL,
     REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 
+var TOKENS_NOT_PERMITED = ["que", "o", "a", "e", "é", "eh", "i", "não", "de", "pra",
+"para", "q", "em", "essa", "da", "esse", "se", "no", "ele", "tem", "do", "the", "k",
+"kk", "kkk", "kkkk", "kkkkk", "kkkkkk", "you", 'he', "him", "his", "her",
+"she", "com", "muito", "vc", "vcs", "você", "voce"];
+
 function getInstagramClient() {
   var ig = instagram.instagram();
 
@@ -29,6 +36,12 @@ function getInstagramClient() {
   });
 
   return ig;
+}
+
+function getAccessToken(req) {
+  // returning elife
+  // return process.env.INSTAGRAM_ACCESS_TOKEN || req.session.instagram.access_token;
+  return req.session.instagram.access_token;
 }
 
 app.set('view engine', 'jade');
@@ -112,7 +125,7 @@ app.get("/api/photos", function(req, res){
   var ig = getInstagramClient();
 
   ig.use({
-    access_token: req.session.instagram.access_token
+    access_token: getAccessToken(req)
   });
 
   ig.user_self_media_recent(function(err, medias, pagination){
@@ -122,7 +135,7 @@ app.get("/api/photos", function(req, res){
 
 });
 
-app.get("/api/comments", function(req, res){
+app.get("/api/comments/:hashtag", function(req, res){
   if (!req.session.instagram) {
     res.status(422).send({
       error: true,
@@ -132,25 +145,125 @@ app.get("/api/comments", function(req, res){
     return;
   }
 
-  if (!req.query.media_id) {
-    res.status(422).send({
-      error: true,
-      message: "No media_id passed"
-    });
 
-    return;
-  }
+  var crawler = new InstagramHashtagCommentsCrawler(req.params.hashtag);
+  crawler.setAccessToken(getAccessToken(req));
+  crawler.maxCallCount = 10;
 
-  var ig = getInstagramClient();
+  crawler.run().then(function(medias){
 
-  ig.use({
-    access_token: req.session.instagram.access_token
+    var finalResultAux = flatten(medias).reduce(function(memo, item){
+      if (item.text) {
+        var tokens = item.text.split(" ");
+        // console.log(item.text);
+
+        tokens.forEach(function(token){
+          if (token.length > 0) {
+            if (token[0] === "@" || token[0] === "#" || isNaN(token) === false ) {
+              return true;
+            }
+
+            if ( TOKENS_NOT_PERMITED.indexOf(token.toLowerCase()) !== -1 ) {
+              return true;
+            }
+
+            token = token.toLowerCase();
+
+            if (!memo[token]) {
+              memo[token] = 0;
+            }
+
+            memo[token] += 1;
+          }
+        });
+      }
+
+      return memo;
+    }, {});
+
+    var finalResult = [];
+
+    for (var k in finalResultAux) {
+      if (finalResultAux.hasOwnProperty(k)) {
+        finalResult.push([k, finalResultAux[k]]);
+      }
+    }
+
+    finalResult.sort(function(a, b){
+      if (a[1] > b[1]) {
+        return 1;
+      } else if  (a[1] < b[1]) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }).reverse();
+
+    res.send(finalResult);
+  }).catch(function(){
+    res.send(arguments);
   });
 
-  ig.comments(req.query.media_id, function(err, result, remaining, limit){
-    if (err) res.send(err);
-    res.send(result);
-  });
+  // var ig = getInstagramClient();
+
+  // ig.use({
+  //   access_token: getAccessToken(req)
+  // });
+
+  // ig.tag_media_recent(req.params.hashtag, function(err, medias, pagination, remaining, limit) {
+  //   // res.send(result);
+  //   if (medias.length === 0) {
+  //     res.send({no_data: ture});
+  //     return;
+  //   }
+
+  //   console.log("begin tag_media_recent");
+  //   console.log(medias);
+  //   console.log(pagination);
+  //   console.log(remaining);
+  //   console.log(limit);
+  //   console.log("end tag_media_recent");
+
+  //   var promises = medias.map(function(media){
+  //     return new Promise(function(resolve, reject){
+  //       ig.comments(media.id, function(err, result, remaining, limit){
+  //         if (err) reject(err);
+  //         console.log("begin comments " + media.id);
+  //         console.log(result);
+  //         console.log(remaining);
+  //         console.log(limit);
+  //         console.log("end comments " + media.id);
+  //         resolve(result);
+  //       });
+  //     });
+  //   });
+
+  //   Promise.all(promises).then(function(result){
+
+  //     var finalResult = flatten(result).reduce(function(memo, item){
+  //       if (item.text) {
+  //         var tokens = item.text.split(" ");
+  //         console.log(item.text);
+
+  //         tokens.forEach(function(token){
+  //           if (!memo[token]) {
+  //             memo[token] = 0;
+  //           }
+
+  //           memo[token] += 1;
+  //         });
+  //       }
+
+  //       return memo;
+  //     }, {});
+
+  //     res.send(finalResult);
+  //   }).catch(function(){
+  //     res.status(500).send(arguments);
+  //   });
+
+  // });
+
 
 });
 
@@ -177,7 +290,7 @@ app.get("/insta_callback", function(req, res){
       if (req.session.back_url) {
         res.redirect(req.session.back_url);
       } else {
-        res.redirect("/app");
+        res.redirect("/hashtags");
       }
     }
   });
@@ -238,7 +351,7 @@ app.get('/api/hashtags/:hashtag', function(req, res){
   var ig = getInstagramClient();
 
   ig.use({
-    access_token: req.session.instagram.access_token
+    access_token: getAccessToken(req)
   });
 
   ig.tag_media_recent(hashtag, function(err, result, remaining, limit) {

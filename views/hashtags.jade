@@ -14,6 +14,7 @@ block main
             <div class="overlay">
                 <div class="toolbar">
                     <a href="#" class="btn btn-default" title="love this picture"><i class="ico-heart6"></i></a>
+                    <a href="{{{link}}}" target="_blank" class="btn btn-default" title="Open externally"><i class=" ico-external-link"></i></a>
                 </div>
             </div>
             <!--/ toolbar overlay -->
@@ -38,7 +39,7 @@ block main
     - var width = 100
     .hashtags-wrapper(style="width: " + hashtags.length * 320 + "px")
       - each hashtag in hashtags
-        .hashtag.loading-child.loading(data-hashtag=hashtag)
+        .hashtag(data-hashtag=hashtag)
           .panel.panel-default
             .panel-heading
               h2.panel-title= hashtag
@@ -54,11 +55,21 @@ block main
 
 
             .panel-body
-              .loading-show
-                p Loading hashtag content
 
-              .instagram-posts-list.loaded-show
-                // thumbnails goes here
+              .loading-graph.loading
+                .loading-show
+                  p Loading graph content
+
+                .loaded-show
+                  .instagram-graph.mb10
+
+              .loading-posts.loading
+                .loading-show
+                  p Posts content
+
+                .loaded-show
+                  .instagram-posts-list
+                    // thumbnails goes here
 
 
 
