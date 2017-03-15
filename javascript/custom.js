@@ -60,7 +60,7 @@ if ($('.hashtag-page').length) {
             post.caption_text = post.caption.text
           }
 
-          post.created_time_str = new Date(parseInt(post.created_time)).shortDate();
+          post.created_time_str = new Date(parseInt(post.created_time) * 1000).shortDate();
 
           return Mustache.render(postTemplate, post);
         });
